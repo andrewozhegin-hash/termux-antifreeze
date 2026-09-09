@@ -57,6 +57,17 @@ af_api_audio_ok() {
   termux-media-player info 2>/dev/null | grep -qi 'playing'
 }
 
+# af-sshd-guard: держит sshd поднятым (превентивно снимает down-маркер и поднимает sshd)
+# логирует только вмешательство
+af_sshd_guard() {
+  local SVDIR="${SVDIR:-$PREFIX/var/service}" acted=0
+  [ -d "$SVDIR/sshd" ] || return 0
+  if [ -f "$SVDIR/sshd/down" ]; then rm -f "$SVDIR/sshd/down" 2>/dev/null; acted=1; fi
+  if ! pgrep -x sshd >/dev/null 2>&1; then sv up sshd >/dev/null 2>&1; acted=1; fi
+  [ "$acted" = 1 ] && af_log "SSHD-GUARD: вмешался (down-маркер снят / sshd поднят)"
+  return 0
+}
+
 af_jobs_count() {
   termux-job-scheduler --pending 2>/dev/null | grep -c '^Pending Job 99[01]' || true
 }
