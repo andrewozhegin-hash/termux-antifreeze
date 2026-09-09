@@ -1,0 +1,8 @@
+# runtime-артефакты (генерируются на месте)
+antifreeze.log
+antifreeze.log.1
+state/
+audio/
+mpv-*.log
+*-test.log
+probe-*

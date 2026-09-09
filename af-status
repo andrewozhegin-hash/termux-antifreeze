@@ -1,0 +1,26 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# af-status — сводка состояния системы antifreeze
+d="/data/data/com.termux/files/home/antifreeze"
+. "$d/lib.sh" 2>/dev/null
+echo "== antifreeze status ($(date '+%F %T')) =="
+if p=$(af_daemon_alive); then
+  echo "DAEMON: жив (pid $p)"
+else
+  echo "DAEMON: МЁРТВ"
+fi
+if p=$(af_mpv_alive); then
+  echo "MPV-щит: играет (pid $p)"
+else
+  echo "MPV-щит: не работает"
+fi
+if af_api_audio_ok; then echo "API-audio: играет"; else echo "API-audio: не играет"; fi
+echo "Jobs: $(termux-job-scheduler --pending 2>/dev/null | grep -c '^Pending Job' || echo 0) активных:"
+termux-job-scheduler --pending 2>/dev/null | sed 's/^/  /'
+hb=$(cat "$AF_STATE/heartbeat" 2>/dev/null || echo "0 -")
+hb_t=$(echo "$hb" | awk '{print $1}')
+age=$(( $(date +%s) - ${hb_t:-0} ))
+echo "Heartbeat: $hb (возраст ${age}с; > $((2*AF_LOOP_SEC))с = ЗАМОРОЖЕН)"
+echo "Wakelock: $(termux-wake-lock 2>&1 | head -1)"
+echo
+echo "-- последние события лога:"
+tail -n 8 "$AF_LOG" 2>/dev/null | sed 's/^/  /'
