@@ -57,14 +57,17 @@ af_api_audio_ok() {
   termux-media-player info 2>/dev/null | grep -qi 'playing'
 }
 
-# af-sshd-guard: держит sshd поднятым (превентивно снимает down-маркер и поднимает sshd)
-# логирует только вмешательство
-af_sshd_guard() {
-  local SVDIR="${SVDIR:-$PREFIX/var/service}" acted=0
-  [ -d "$SVDIR/sshd" ] || return 0
-  if [ -f "$SVDIR/sshd/down" ]; then rm -f "$SVDIR/sshd/down" 2>/dev/null; acted=1; fi
-  if ! pgrep -x sshd >/dev/null 2>&1; then sv up sshd >/dev/null 2>&1; acted=1; fi
-  [ "$acted" = 1 ] && af_log "SSHD-GUARD: вмешался (down-маркер снят / sshd поднят)"
+# af-sshd-guard: держит перечисленные runit-сервисы поднятыми
+# (снимает down-маркеры, sv up упавшим). Логирует только вмешательство.
+# Список сервисов: AF_GUARD_SERVICES (space-separated, из antifreeze.conf)
+af_services_guard() {
+  local SVDIR="${SVDIR:-$PREFIX/var/service}" s acted=0
+  for s in ${AF_GUARD_SERVICES:-sshd}; do
+    [ -d "$SVDIR/$s" ] || continue
+    if [ -f "$SVDIR/$s/down" ]; then rm -f "$SVDIR/$s/down" 2>/dev/null; acted=1; fi
+    if ! sv status "$s" 2>/dev/null | grep -q "^run:"; then sv up "$s" >/dev/null 2>&1; acted=1; fi
+  done
+  [ "$acted" = 1 ] && af_log "GUARD: вмешался (сервисы подняты: ${AF_GUARD_SERVICES})"
   return 0
 }
 

@@ -53,8 +53,8 @@ while :; do
   # ---------- 5/6. jobs ----------
   [ "$(af_jobs_count)" -ge 1 ] || { af_log "CYCLE $cycle: jobs потеряны, переустанавливаю"; af_job_schedule 990; }
 
-  # ---------- 7. sshd-guard ----------
-  af_sshd_guard
+  # ---------- 7. сервис-guard (sshd, tor, X11...) ----------
+  af_services_guard
 
   # heartbeat-файл: job и boot-скрипты по нему видят жив ли демон
   echo "$now $$" > "$AF_STATE/heartbeat"
